@@ -1,5 +1,11 @@
 
 * Stippling post-processing effect in Unity
+
+(Just having some quick fun and trying this out with webcam!)
+
+*[[https://github.com/OskarSigvardsson/stippling-effect][Original repo by Oskar Sigvardsson here]]*
+
+** Description
 This repository contains a work-in-progress post processing effect in Unity that
 creates a "stippled" look, as if the image was just drawn with black dots. It's
 sort-of a pointillism effect, sort-of digital half-toning, and very much a work
