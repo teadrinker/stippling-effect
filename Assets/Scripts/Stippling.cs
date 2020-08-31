@@ -21,9 +21,15 @@ namespace GK {
 		[Range(0.0f, 0.02f)]
 		public float NibRadius;
 
-		[Range(0, 1024*1024)]
-		public int MaxStipples = 1024*1024;
-		
+		[Range(0, 1024 * 1024)]
+		public int MaxStipples = 1024 * 1024;
+
+		[Range(0f, 1f)]
+		public float LumaStretchMin = 0f;
+
+		[Range(0f, 1f)]
+		public float LumaStretchMax = 1f;
+
 		Material stipplingMat;
 		Material blitMat;
 		ComputeBuffer points;
@@ -67,6 +73,7 @@ namespace GK {
 			VoronoiCompute.SetInt("_MaxStipples", (int)Mathf.Min(stippleCount, MaxStipples));
 			VoronoiCompute.SetFloat("_NibSize", Mathf.PI * NibRadius * NibRadius);
 			VoronoiCompute.SetVector("_TexSize", new Vector2(cam.pixelWidth, cam.pixelHeight));
+			VoronoiCompute.SetVector("_LumaTransform", new Vector2(LumaStretchMin, LumaStretchMax));
 			stipplingMat.SetColor("_Color", Color.black);
 			particles.SetCounterValue(0);
 

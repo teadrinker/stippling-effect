@@ -8,6 +8,7 @@ uint _MaxStipples;
 float _NibSize;
 float2 _TexSize;
 float4 _PixTrans;
+float2 _LumaTransform;
 
 Texture2D<float4> _ScreenTexture;
 StructuredBuffer<float2> _Points;
@@ -24,9 +25,11 @@ void StreamStipples (uint3 id : SV_DispatchThreadID)
         float2 locT = mul(T, loc);
 
 		float3 col = _ScreenTexture[_TexSize * locT].rgb;
-		float luma = 1 - dot(col, float3(0.2126, 0.7152, 0.0722));
+		float luma = dot(col, float3(0.2126, 0.7152, 0.0722));
+		luma = _LumaTransform.x + luma * (_LumaTransform.y - _LumaTransform.x);
+		luma = 1. - luma;
 
-		float area = 4.0/id.x;
+		float area = 9.0/id.x;
 
 		if (area > _NibSize / luma) {
 			_Particles.Append(float3(loc, luma));
