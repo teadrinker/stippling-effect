@@ -8,6 +8,7 @@ uint _MaxStipples;
 float _NibSize;
 float2 _TexSize;
 float4 _PixTrans;
+float _LumaGain;
 float2 _LumaTransform;
 
 Texture2D<float4> _ScreenTexture;
@@ -26,8 +27,9 @@ void StreamStipples (uint3 id : SV_DispatchThreadID)
 
 		float3 col = _ScreenTexture[_TexSize * locT].rgb;
 		float luma = dot(col, float3(0.2126, 0.7152, 0.0722));
+		luma *= _LumaGain;
 		luma = _LumaTransform.x + luma * (_LumaTransform.y - _LumaTransform.x);
-		luma = 1. - luma;
+		luma = 1. - clamp(luma, 0., 1.);
 
 		float area = 9.0/id.x;
 
