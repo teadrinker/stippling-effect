@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -34,6 +35,8 @@ namespace GK {
 
 		int stippleCount;
 
+		bool forceReinit = false;
+
 		Camera _cam;
 		Camera cam {
 			get {
@@ -53,6 +56,13 @@ namespace GK {
 		}
 
 		void SetShaderParams() {
+			if(forceReinit)
+			{
+				forceReinit = false;
+				enabled = false;
+				enabled = true;
+			}
+
 			stipplingMat.SetFloat("_NibRadius", NibRadius);
 			VoronoiCompute.SetInt("_MaxStipples", (int)Mathf.Min(stippleCount, MaxStipples));
 			VoronoiCompute.SetFloat("_NibSize", Mathf.PI * NibRadius * NibRadius);
@@ -89,7 +99,7 @@ namespace GK {
 				particles.Release();
 				args.Release();
 
-				//GetComponent<Camera>().RemoveCommandBuffer(CameraEvent.AfterEverything, commands);
+				GetComponent<Camera>().RemoveCommandBuffer(CameraEvent.AfterEverything, commands);
 
 				points = null;
 				particles = null;
@@ -99,6 +109,10 @@ namespace GK {
 		}
 
 		void OnEnable() {
+
+#if UNITY_EDITOR
+			ComputeShaderPostprocessor.AddImportHandler(VoronoiCompute, OnComputeShaderImported);
+#endif
 			if (!IVS) return;
 			cam.forceIntoRenderTexture = true;
 			
@@ -176,5 +190,51 @@ namespace GK {
 
 			cam.AddCommandBuffer(CameraEvent.AfterEverything, commands);
 		}
+
+
+
+#if UNITY_EDITOR
+
+		class ComputeShaderPostprocessor : UnityEditor.AssetPostprocessor
+		{
+			public delegate void ComputeShaderEventHandler(ComputeShader shader);
+
+			static Dictionary<ComputeShader, ComputeShaderEventHandler> Handlers =
+				new Dictionary<ComputeShader, ComputeShaderEventHandler>();
+
+			public static void AddImportHandler(ComputeShader shader, ComputeShaderEventHandler handler)
+			{
+				Handlers[shader] = handler;
+			}
+
+			public static void RemoveImportHandler(ComputeShader shader)
+			{
+				Handlers.Remove(shader);
+			}
+
+			static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+			{
+				foreach (string str in importedAssets)
+				{
+					if (str.EndsWith(".compute"))
+					{
+						var shader = (ComputeShader)UnityEditor.AssetDatabase.LoadAssetAtPath(str, typeof(ComputeShader));
+						if (shader != null && Handlers.TryGetValue(shader, out var handler))
+						{
+							handler.Invoke(shader);
+						}
+					}
+				}
+			}
+		}
+
+
+		void OnComputeShaderImported(ComputeShader shader)
+		{
+			Debug.Log("OnBeforeAssemblyReload");
+			forceReinit = true;
+		}
+#endif
+
 	}
 }
